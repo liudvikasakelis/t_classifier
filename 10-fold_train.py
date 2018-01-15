@@ -111,26 +111,27 @@ start_time = time.time()
 
 # from data_utils import Data
 
-full_train_data = pd.read_csv(train_file, sep=',', quotechar='"')
+fdata = pd.read_csv(train_file, sep=',', quotechar='"')
 
-full_train_data = pd.DataFrame(full_train_data[['fold', 'y', 'paymentpurpose',
+fdata = pd.DataFrame(fdata[['fold', 'y', 'paymentpurpose',
                                         'operationinout', 'operationdate']])
-full_train_data.columns = ['fold', 'y', 'paymentpurpose', 'operationinout', 
+fdata.columns = ['fold', 'y', 'paymentpurpose', 'operationinout', 
                            'operationdate']
 
-full_train_data['paymentpurpose'] = (full_train_data['operationinout'].map(str)
-                                   + full_train_data['paymentpurpose'])
-fold_mask = full_train_data.fold.tolist()
-X = [matrixer(x) for x in full_train_data['paymentpurpose']]
-Y = full_train_data.y.tolist()
+fdata['paymentpurpose'] = (fdata['operationinout'].map(str)
+                                   + fdata['paymentpurpose'])
+fold_mask = fdata.fold.tolist()
+X = [matrixer(x) for x in fdata['paymentpurpose']]
+Y = Y_matrixer(fdata.y.tolist())
 
-print("Loadded all data in {}".format(time.time() - start_time))
-print('lengths {} {} (for sanity)'.format(len(X), len(Y)))
-#print(X[1])
-#print(Y[1:100])
 for i in range(1, len(X)):
     if len(X[i]) > l0:
         X[i] = X[i][:l0]
+
+print("Loadded all data in {}".format(time.time() - start_time))
+print('lengths {} {} (for sanity)'.format(len(X), len(Y)))
+
+
 
 start_weights = list(model.get_weights())
 total_eval_results = [['fold', 'epoch', 'categorical_crossentropy',
@@ -146,10 +147,10 @@ for current_fold in range(1, 11):
     Y_test = []
     for i in range(1, len(fold_mask)):
         if fold_mask[i] == current_fold:
-            if full_train_data['operationdate'][i] > cutoff:
+            if fdata['operationdate'][i] > cutoff:
                 X_test.append(X[i])
                 Y_test.append(Y[i])
-        elif full_train_data['operationdate'][i] <= cutoff:
+        elif fdata['operationdate'][i] <= cutoff:
             X_train.append(X[i])
             Y_train.append(Y[i])
     Y_test = Y_matrixer(Y_test)
