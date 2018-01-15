@@ -2,10 +2,10 @@ config = {}
 class TrainingConfig(object):
     
     alpha = 2e-3
-    decay = 0.5
+    decay = 0
     beta1 = 0.9
     beta2 = 0.999
-    epochs = 5
+    epochs = 15
     evaluate_every = 1
     checkpoint_every = 1
     epsilon = 1e-8
