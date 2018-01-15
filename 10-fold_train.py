@@ -131,30 +131,20 @@ for i in range(1, len(X)):
 print("Loadded all data in {}".format(time.time() - start_time))
 print('lengths {} {} (for sanity)'.format(len(X), len(Y)))
 
-
-
-start_weights = list(model.get_weights())
 total_eval_results = [['fold', 'epoch', 'categorical_crossentropy',
                        'categorical_accuracy']]
 
 for current_fold in range(1, 11):
     print('\nDoing fold {}'.format(current_fold))
     start_time = time.time()
-    
-    X_train = []
-    Y_train = []
-    X_test = []
-    Y_test = []
-    for i in range(1, len(fold_mask)):
-        if fold_mask[i] == current_fold:
-            if fdata['operationdate'][i] > cutoff:
-                X_test.append(X[i])
-                Y_test.append(Y[i])
-        elif fdata['operationdate'][i] <= cutoff:
-            X_train.append(X[i])
-            Y_train.append(Y[i])
-    Y_test = Y_matrixer(Y_test)
-    Y_train = Y_matrixer(Y_train)
+    test_index = ((fdata.fold == current_fold) &
+                   (fdata.operationdate > cutoff))
+    train_index = ((fdata.fold != current_fold) & 
+                    (fdata.operationdate < cutoff))
+    X_train = [X[i] for i in train_index]
+    Y_train = [Y[i] for i in train_index]
+    X_test = [X[i] for i in test_index]
+    Y_test = [Y[i] for i in test_index]
     print('Folding done in {} \n {} train entries\n {} test entries'.format(
            time.time() - start_time, len(X_train), len(X_test)))
     print('ratio {}'.format(len(X_train)/len(X_test)))
