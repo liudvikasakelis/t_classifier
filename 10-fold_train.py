@@ -137,15 +137,15 @@ total_eval_results = [['fold', 'epoch', 'categorical_crossentropy',
 for current_fold in range(1, 11):
     print('\nDoing fold {}'.format(current_fold))
     start_time = time.time()
-    test_index = ((fdata.fold == current_fold) &
-                   (fdata.operationdate > cutoff))
-    train_index = ((fdata.fold != current_fold) & 
-                    (fdata.operationdate < cutoff))
-    X_train = [X[i] for i in train_index]
-    Y_train = [Y[i] for i in train_index]
-    X_test = [X[i] for i in test_index]
-    Y_test = [Y[i] for i in test_index]
-    
+    test_index = ((fdata.fold == current_fold) & (fdata.operationdate > cutoff))
+    train_index = ((fdata.fold != current_fold) & (fdata.operationdate < cutoff))
+    print(test_index[1:20])
+    print(train_index[1:20])
+    X_train = [X[i] for i, value in enumerate(train_index) if value]
+    Y_train = [Y[i] for i, value in enumerate(train_index) if value]
+    X_test = [X[i] for i, value in enumerate(test_index) if value]
+    Y_test = [Y[i] for i, value in enumerate(test_index) if value]
+
     Y_train = Y_matrixer(Y_train)
     Y_test = Y_matrixer(Y_test)
     print('Folding done in {} \n {} train entries\n {} test entries'.format(
@@ -173,7 +173,7 @@ for current_fold in range(1, 11):
               metrics=['categorical_accuracy'])
     print("New model built")
     for epoch in range(1, config.training.epochs + 1):
-        print('Manual epoch {}'.format(epoch))
+        print('Manual epoch {}/{}'.format(epoch, config.training.epochs))
         model.fit(X_train, Y_train, epochs=1, 
                   batch_size=config.batch_size)
         ev_res = model.evaluate(X_test, Y_test, verbose=0)
