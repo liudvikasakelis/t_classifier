@@ -122,7 +122,7 @@ fdata['paymentpurpose'] = (fdata['operationinout'].map(str)
                                    + fdata['paymentpurpose'])
 fold_mask = fdata.fold.tolist()
 X = [matrixer(x) for x in fdata['paymentpurpose']]
-Y = Y_matrixer(fdata.y.tolist())
+Y = fdata.y.tolist()
 
 for i in range(1, len(X)):
     if len(X[i]) > l0:
@@ -145,6 +145,9 @@ for current_fold in range(1, 11):
     Y_train = [Y[i] for i in train_index]
     X_test = [X[i] for i in test_index]
     Y_test = [Y[i] for i in test_index]
+    
+    Y_train = Y_matrixer(Y_train)
+    Y_test = Y_matrixer(Y_test)
     print('Folding done in {} \n {} train entries\n {} test entries'.format(
            time.time() - start_time, len(X_train), len(X_test)))
     print('ratio {}'.format(len(X_train)/len(X_test)))
