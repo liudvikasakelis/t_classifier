@@ -28,6 +28,8 @@ batch = 128
 
 model_path = sys.argv[1]
 data_path = sys.argv[2]
+cutoff = sys.argv[3]
+
 print('Loading model')
 model = keras.models.load_model(model_path)
 print('Model loaded')
@@ -36,7 +38,7 @@ print("Loading the data sets...")
 start_time = time.time()
 
 fdata = pd.read_csv(data_path, sep=',', quotechar='"')
-fdata = pd.DataFrame(fdata[['y', 'paymentpurpose','operationinout'
+fdata = pd.DataFrame(fdata[['y', 'paymentpurpose','operationinout',
                             'operationdate']])
 fdata.columns = ['y', 'paymentpurpose', 'operationinout', 'operationdate']
 fdata['paymentpurpose'] = (fdata['operationinout'].map(str)
