@@ -28,7 +28,7 @@ batch = 128
 
 model_path = sys.argv[1]
 data_path = sys.argv[2]
-cutoff = sys.argv[3]
+cutoff = int(sys.argv[3])
 
 print('Loading model')
 model = keras.models.load_model(model_path)
@@ -43,14 +43,15 @@ fdata = pd.DataFrame(fdata[['y', 'paymentpurpose','operationinout',
 fdata.columns = ['y', 'paymentpurpose', 'operationinout', 'operationdate']
 fdata['paymentpurpose'] = (fdata['operationinout'].map(str)
                                    + fdata['paymentpurpose'])
-                                   
 X = [matrixer(x) for x in fdata['paymentpurpose']]
+X = [X[i] for i, date in enumerate(fdata.operationdate) if date < cutoff]
 Y = fdata.y.tolist()
+Y = [Y[i] for i, date in enumerate(fdata.operationdate) if date < cutoff]
 Y = Y_matrixer(Y)
 print("Loadded all data in {}".format(time.time() - start_time))
+
 print('lengths {} {} (for sanity)'.format(len(X), len(Y)))
-#print(X[1])
-#print(Y[1:100])
+
 for i in range(1, len(X)):
     if len(X[i]) > l0:
         X[i] = X[i][:l0]
