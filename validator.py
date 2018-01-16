@@ -48,7 +48,6 @@ X = [matrixer(x) for x in fdata['paymentpurpose']]
 Y = fdata.y.tolist()
 Y = Y_matrixer(Y)
 print("Loadded all data in {}".format(time.time() - start_time))
-
 print('lengths {} {} (for sanity)'.format(len(X), len(Y)))
 #print(X[1])
 #print(Y[1:100])
