@@ -24,13 +24,14 @@ def Y_matrixer(Y):
 
 alphabet_size = 400
 l0 = 125
-batch = 128
+batch = 512
 
 model_path = sys.argv[1]
 data_path = sys.argv[2]
-cutoff = int(sys.argv[3])
+# cutoff1 = int(sys.argv[3])
+# cutoff2 = int(sys.argv[4])
 
-print('Loading model')
+print('Loading {}'.format(model_path))
 model = keras.models.load_model(model_path)
 print('Model loaded')
 
@@ -44,17 +45,20 @@ fdata.columns = ['y', 'paymentpurpose', 'operationinout', 'operationdate']
 fdata['paymentpurpose'] = (fdata['operationinout'].map(str)
                                    + fdata['paymentpurpose'])
 X = [matrixer(x) for x in fdata['paymentpurpose']]
-X = [X[i] for i, date in enumerate(fdata.operationdate) if date < cutoff]
-Y = fdata.y.tolist()
-Y = [Y[i] for i, date in enumerate(fdata.operationdate) if date < cutoff]
-Y = Y_matrixer(Y)
-print("Loadded all data in {}".format(time.time() - start_time))
-
-print('lengths {} {} (for sanity)'.format(len(X), len(Y)))
 
 for i in range(1, len(X)):
     if len(X[i]) > l0:
         X[i] = X[i][:l0]
+Y = fdata.y.tolist()
 
-print(model.metrics_names)
-print(model.evaluate(X, Y, batch_size=batch, verbose=True))
+print("Loadded all data ({} lines) in {}".format(len(X), 
+                                                 time.time() - start_time))
+
+for cutoff1, cutoff2 in [(12000, 16100), (16100, 16750), (16750, 17500)]:
+    X_t = [X[i] for i, date in enumerate(fdata.operationdate) if cutoff1 <= date < cutoff2]
+    Y_t = [Y[i] for i, date in enumerate(fdata.operationdate) if cutoff1 <= date < cutoff2]
+    Y_t = Y_matrixer(Y_t)
+    print('date range {} - {}, total entries {}'.format(cutoff1, cutoff2, 
+                                                        len(X_t))) 
+    print(model.metrics_names)
+    print(model.evaluate(X_t, Y_t, batch_size=batch, verbose=True))
