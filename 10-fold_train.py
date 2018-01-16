@@ -139,8 +139,6 @@ for current_fold in range(1, 11):
     start_time = time.time()
     test_index = ((fdata.fold == current_fold) & (fdata.operationdate > cutoff))
     train_index = ((fdata.fold != current_fold) & (fdata.operationdate < cutoff))
-    print(test_index[1:20])
-    print(train_index[1:20])
     X_train = [X[i] for i, value in enumerate(train_index) if value]
     Y_train = [Y[i] for i, value in enumerate(train_index) if value]
     X_test = [X[i] for i, value in enumerate(test_index) if value]
@@ -182,8 +180,7 @@ for current_fold in range(1, 11):
         print(ev_res)
         total_eval_results.append(ev_res)
     
-    # model_name = 'model{}.test'.format(current_fold)
-    # model.save(model_name)
+    model.save('model{}.test'.format(current_fold))
     print("Done with fold {}!\n".format(current_fold))
 
 total_eval_results = [','.join([str(a) for a in x]) for x in total_eval_results]
