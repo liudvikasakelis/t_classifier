@@ -180,7 +180,7 @@ for current_fold in range(1, 11):
         print(ev_res)
         total_eval_results.append(ev_res)
     
-    model.save('model{}.test'.format(current_fold))
+    # model.save('model{}.test'.format(current_fold))
     print("Done with fold {}!\n".format(current_fold))
 
 total_eval_results = [','.join([str(a) for a in x]) for x in total_eval_results]
