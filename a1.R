@@ -1,14 +1,13 @@
 args <- commandArgs(TRUE)
 # args <- c('data.csv', '50', '10')
 
-### USING category_mappings.txt FROM CURRENT DIRECTORY TO RE-MAP CATEGORIES
+### USING category_mappings.txt FROM dirname() TO RE-MAP CATEGORIES
 
 infile <- args[1]
 # mode <- args[2]
 cutoff.1 <- as.integer(args[2])
 cutoff.2 <- as.integer(args[3])
-cutoff.3 <- as.integer(args[4])
-if (is.na(cutoff.1) || is.na(cutoff.2) || is.na(cutoff.3)){
+if (is.na(cutoff.1) || is.na(cutoff.2)){
   stop('Missing cutoff argument(s)')
 }
 
@@ -25,8 +24,6 @@ q$y2[q$y2 %in% others] <- NA
 
 Encoding(q$paymentpurpose) <- "UTF-8" # IS NEEDED
 q$paymentpurpose <- gsub('\\s+', ' ', q$paymentpurpose)
-cat("String length distribution in paymentpurpose after whitespace contraction\n")
-quantile(nchar(q$paymentpurpose), probs=seq(0,1,0.025), na.rm=T) # curious
 
 q$y <- q$y1
 na.mask <- is.na(q$y)
@@ -68,7 +65,8 @@ q <- q[!(q$y %in% ppl.cats),]
 cat(nrow(q), "rows left\n")
 
 ### MAPPING
-cat.map <- read.csv('category_mappings.txt', header=T, as.is=T)
+cat.map <- read.csv(paste(dirname(infile), 'category_mappings.txt', sep='/'),
+                    header=T, as.is=T)
 for(category in cat.map$original){
   mapped.cat <- cat.map$mapped[cat.map$original==category]
   q$y[q$y == category] <- mapped.cat
@@ -136,20 +134,13 @@ train <- merge(train, train.ppl, by="StatementHolderId", all.x=T)
 
 ### Writeout respecting cutoff.3 date
 
-train.out <- paste('train', infile, sep='.')
-test.out <- paste('test', infile, sep='.')
-write.table(train[train$operationdate < cutoff.3,], train.out, row.names=F, col.names=T, sep=",", 
+train.out <- file.path(dirname(infile), paste('train', basename(infile), sep='.'))
+test.out <- file.path(dirname(infile), paste('test', basename(infile), sep='.'))
+write.table(train, train.out, row.names=F, col.names=T, sep=",", 
             qmethod="double", fileEncoding="UTF-8")
-write.table(test[test$operationdate > cutoff.3,], test.out, row.names=F, col.names=T, sep=",", 
+write.table(test, test.out, row.names=F, col.names=T, sep=",", 
             qmethod="double", fileEncoding="UTF-8") 
 
-
-#write.table(train[train$operationinout==1,], paste('out', train.out, sep='.'), 
-#            row.names=F, col.names=T, sep=",", qmethod="double", 
-#            fileEncoding="UTF-8")
-#write.table(test[test$operationinout==1,], paste('out', test.out, sep='.'), 
-#            row.names=F, col.names=T, sep=",", qmethod="double", 
-#            fileEncoding="UTF-8")
 
 
 
