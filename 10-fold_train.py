@@ -73,16 +73,17 @@ start_time = time.time()
 
 # from data_utils import Data
 
-fdata = pd.read_csv(train_file, sep=',', quotechar='"')
+fdata = pd.read_csv(train_file, sep=',', quotechar='"', 
+                    usecols=['fold', 'y', 'paymentpurpose', 'operationinout', 
+                             'operationdate'])
 
-fdata = pd.DataFrame(fdata[['fold', 'y', 'paymentpurpose',
-                                        'operationinout', 'operationdate']])
-fdata.columns = ['fold', 'y', 'paymentpurpose', 'operationinout', 
-                           'operationdate']
+fdata = fdata[fdata.operationdate < c['train_cutoff']]
 
 fdata['paymentpurpose'] = (fdata['operationinout'].map(str)
                                    + fdata['paymentpurpose'])
+
 fold_mask = fdata.fold.tolist()
+
 X = [matrixer(x) for x in fdata['paymentpurpose']]
 Y = fdata.y.tolist()
 
@@ -156,5 +157,5 @@ with open(results_file, mode='w') as f:
     f.write('\n')
     f.write(time.asctime())
     f.write('\n')
-    f.write(configuration)
+    f.write(json.dumps(c))
     f.write('\n'.join([str(a) for a in total_eval_results]))
