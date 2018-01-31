@@ -11,6 +11,7 @@ from keras.layers import ThresholdedReLU
 from keras.layers import Dropout
 from keras.optimizers import Adam
 
+from sklearn.metrics import confusion_matrix
 import numpy as np
 import pandas as pd
 import json
@@ -31,6 +32,9 @@ def Y_matrixer(Y):
         ret[ai, a-1] = 1
     return(ret)
 
+def Y_unmatrixer(Y):
+    Y = [list(x).index(max(x)) for x in Y]
+    return(Y)
 
 train_file = sys.argv[1]
 custom_cfg = sys.argv[2]
@@ -143,6 +147,14 @@ for current_fold in range(1, 11):
         model.fit(X_train, Y_train, epochs=1, 
                   batch_size=c['batch_size'])
         ev_res = model.evaluate(X_test, Y_test, verbose=0)
+        
+        pred_Y = Y_unmatrixer(model.predict(X_test))
+        print(pred_Y[1])
+        conf = confusion_matrix(Y_unmatrixer(Y_test), pred_Y).astype('str')
+        with open('f{}e{}.txt'.format(current_fold, epoch), 'w') as f:
+            for li in conf:
+                f.write('\t'.join(list(li)))
+                f.write('\n')
         ev_res.insert(0, epoch)
         ev_res.insert(0, current_fold) 
         print(ev_res)
