@@ -59,8 +59,8 @@ default_cfg = {'alpha': 2e-3,
               'batch_size': 512,
               'num_of_classes': 112,
               'dropout_p': 0.5,
-              'train_cutoff': 16750,
-              'CV_cutoff': 16100
+              'train_cutoff': 16801,
+              'CV_cutoff': 16071
 }
 
 custom_cfg = json.loads(custom_cfg)
