@@ -159,7 +159,7 @@ for current_fold in range(1, 11):
         ev_res.insert(0, current_fold) 
         print(ev_res)
         total_eval_results.append(ev_res)
-        total_eval_results.append(np.array2string(conf))
+        print(conf2str())
     
     model.save('model{}.test'.format(current_fold))
     print("Done with fold {}!\n".format(current_fold))
