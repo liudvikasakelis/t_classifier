@@ -69,7 +69,8 @@ if (custom_cfg.keys() - default_cfg.keys()):
 
 results_file = 'results/' + str(int(time.time()/60)) + '.results.txt'
 print('Custom config {}, results output to {}'.format(custom_cfg, results_file))
-c = {**default_cfg, **custom_cfg}
+# Combine configurations preferring custom_cfg
+c = {**default_cfg, **custom_cfg} 
 print(c)
 
 print("Loading the data sets...")
@@ -149,18 +150,17 @@ for current_fold in range(1, 11):
         ev_res = model.evaluate(X_test, Y_test, verbose=0)
         
         pred_Y = Y_unmatrixer(model.predict(X_test))
-        print(pred_Y[1])
         conf = confusion_matrix(Y_unmatrixer(Y_test), pred_Y).astype('str')
         with open('f{}e{}.txt'.format(current_fold, epoch), 'w') as f:
             for li in conf:
-                f.write('\t'.join(list(li)))
+                f.write(','.join(list(li)))
                 f.write('\n')
         ev_res.insert(0, epoch)
         ev_res.insert(0, current_fold) 
         print(ev_res)
         total_eval_results.append(ev_res)
     
-    # model.save('model{}.test'.format(current_fold))
+    model.save('model{}.test'.format(current_fold))
     print("Done with fold {}!\n".format(current_fold))
 
 total_eval_results = [','.join([str(a) for a in x]) for x in total_eval_results]

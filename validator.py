@@ -54,7 +54,7 @@ Y = fdata.y.tolist()
 print("Loadded all data ({} lines) in {}".format(len(X), 
                                                  time.time() - start_time))
 
-for cutoff1, cutoff2 in [(12000, 16100), (16100, 16750), (16750, 17500)]:
+for cutoff1, cutoff2 in [(12000, 16071)]:
     X_t = [X[i] for i, date in enumerate(fdata.operationdate) if cutoff1 <= date < cutoff2]
     Y_t = [Y[i] for i, date in enumerate(fdata.operationdate) if cutoff1 <= date < cutoff2]
     Y_t = Y_matrixer(Y_t)
