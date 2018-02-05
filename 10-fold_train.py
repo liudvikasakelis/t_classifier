@@ -27,7 +27,7 @@ def matrixer(line):
     return(l)
 
 def Y_matrixer(Y):
-    ret = np.zeros([len(Y), 112])
+    ret = np.zeros([len(Y), c['num_of_classes']])
     for ai, a in enumerate(Y):
         ret[ai, a-1] = 1
     return(ret)
@@ -154,21 +154,23 @@ for current_fold in range(1, 11):
         ev_res = model.evaluate(X_test, Y_test, verbose=0)
         
         pred_Y = Y_unmatrixer(model.predict(X_test))
-        conf = confusion_matrix(Y_unmatrixer(Y_test), pred_Y)
+        conf = confusion_matrix(Y_unmatrixer(Y_test), pred_Y,
+                                labels=range(1, c['num_of_classes']+1))
         ev_res.insert(0, epoch)
         ev_res.insert(0, current_fold) 
         print(ev_res)
-        total_eval_results.append(ev_res)
-        print(conf2str())
+        total_eval_results.append(','.join([str(x) for x in ev_res]))
+        total_eval_results.append(conf2str(conf))
+        # print(conf2str(conf))
     
     model.save('model{}.test'.format(current_fold))
     print("Done with fold {}!\n".format(current_fold))
 
-total_eval_results = [','.join([str(a) for a in x]) for x in total_eval_results]
 with open(results_file, mode='w') as f:
     f.write(global_start_time)
     f.write('\n')
     f.write(time.asctime())
     f.write('\n')
     f.write(json.dumps(c))
+    f.write('\n')
     f.write('\n'.join([str(a) for a in total_eval_results]))
