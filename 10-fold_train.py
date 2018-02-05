@@ -36,6 +36,10 @@ def Y_unmatrixer(Y):
     Y = [list(x).index(max(x)) for x in Y]
     return(Y)
 
+def conf2str(conf):
+    conf = conf.astype('str')
+    return('\n'.join([','.join(i) for i in conf]) + '\n')
+    
 train_file = sys.argv[1]
 custom_cfg = sys.argv[2]
 
