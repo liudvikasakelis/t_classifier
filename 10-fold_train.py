@@ -103,8 +103,7 @@ for i in range(1, len(X)):
 print("Loadded all data in {}".format(time.time() - start_time))
 print('lengths {} {} (for sanity)'.format(len(X), len(Y)))
 
-total_eval_results = [['fold', 'epoch', 'categorical_crossentropy',
-                       'categorical_accuracy']]
+total_eval_results = [['fold,epoch,categorical_crossentropy,categorical_accuracy']]
 
 for current_fold in range(1, 11):
     print('\nDoing fold {}'.format(current_fold))
