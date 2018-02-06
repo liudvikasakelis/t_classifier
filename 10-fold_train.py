@@ -153,7 +153,7 @@ for current_fold in range(1, 11):
         ev_res = model.evaluate(X_test, Y_test, verbose=0)
         
         pred_Y = Y_unmatrixer(model.predict(X_test))
-        conf = confusion_matrix(Y_unmatrixer(Y_test), pred_Y,
+        conf = confusion_matrix(y_true=Y_unmatrixer(Y_test), y_pred=pred_Y,
                                 labels=range(1, c['num_of_classes']+1))
         ev_res.insert(0, epoch)
         ev_res.insert(0, current_fold) 
