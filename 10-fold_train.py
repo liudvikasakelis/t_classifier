@@ -81,8 +81,6 @@ custom_cfg = json.loads(custom_cfg)
 if (custom_cfg.keys() - default_cfg.keys()):
     sys.exit('wrong key in config')
 
-class_weights = Wget('weights.txt')
-
 results_file = 'results/' + str(int(time.time()/60)) + '.results.txt'
 print('Custom config {}, results output to {}'.format(custom_cfg, results_file))
 # Combine configurations preferring custom_cfg
