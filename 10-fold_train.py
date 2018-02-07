@@ -11,12 +11,13 @@ from keras.layers import ThresholdedReLU
 from keras.layers import Dropout
 from keras.optimizers import Adam
 
+from collections import Counter
 from sklearn.metrics import confusion_matrix
 import numpy as np
 import pandas as pd
 import json
 
-#### Functions
+### Functions
 
 def matrixer(line):
     try:
@@ -40,8 +41,14 @@ def Y_unmatrixer(Y):
 def conf2str(conf):
     conf = conf.astype('str')
     return('\n'.join([','.join(i) for i in conf]) + '\n')
-    
-####
+   
+def Wget(fname):
+    with open(fname, 'r') as f:
+        lines = f.read()
+    weights = [int(x) for x in lines.split('\n') if x != '']
+    return(weights)
+   
+###
 
 train_file = sys.argv[1]
 custom_cfg = sys.argv[2]
@@ -74,20 +81,16 @@ custom_cfg = json.loads(custom_cfg)
 if (custom_cfg.keys() - default_cfg.keys()):
     sys.exit('wrong key in config')
 
+class_weights = Wget('weights.txt')
+
 results_file = 'results/' + str(int(time.time()/60)) + '.results.txt'
 print('Custom config {}, results output to {}'.format(custom_cfg, results_file))
 # Combine configurations preferring custom_cfg
 c = {**default_cfg, **custom_cfg} 
 print(c)
-
-class_weights = dict()
-for i in range(1, c['num_of_classes']+1):
-    class_weights[i] = 1
     
 print("Loading the data sets...")
 start_time = time.time()
-
-# from data_utils import Data
 
 fdata = pd.read_csv(train_file, sep=',', quotechar='"', 
                     usecols=['fold', 'y', 'paymentpurpose', 'operationinout', 
@@ -118,9 +121,18 @@ for current_fold in range(1, 11):
     Y_train = [Y[i] for i, value in enumerate(train_index) if value]
     X_test = [X[i] for i, value in enumerate(test_index) if value]
     Y_test = [Y[i] for i, value in enumerate(test_index) if value]
+    
+    class_counter = Counter(Y_train)
+    class_weights = [len(Y_train)/class_counter[x] 
+                     if class_counter[x] != 0 else 0 
+                     for x in range(1, c['num_of_classes']+1)]
 
     Y_train = Y_matrixer(Y_train)
     Y_test = Y_matrixer(Y_test)
+    
+    
+        
+    
     print('Folding done in {} \n {} train entries\n {} test entries'.format(
            time.time() - start_time, len(X_train), len(X_test)))
     print('ratio {}'.format(len(X_train)/len(X_test)))
@@ -147,13 +159,14 @@ for current_fold in range(1, 11):
     optimizer = Adam(lr=c['alpha'], beta_1=c['beta1'], beta_2=c['beta2'], 
                      epsilon=c['epsilon'], decay=c['decay'])
     model.compile(optimizer=optimizer, loss='categorical_crossentropy',
-                  metrics=['categorical_accuracy'])
+                  metrics=['categorical_accuracy'], 
+                  loss_weights=[class_weights])
     print("New model built")
 
     for epoch in range(1, c['epochs'] + 1):
         print('Manual epoch {}/{}'.format(epoch, c['epochs']))
         model.fit(X_train, Y_train, epochs=1, 
-                  batch_size=c['batch_size'], class_weight=class_weights)
+                  batch_size=c['batch_size'])
         ev_res = model.evaluate(X_test, Y_test, verbose=0)
         
         pred_Y = Y_unmatrixer(model.predict(X_test))
