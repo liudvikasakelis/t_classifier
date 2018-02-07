@@ -171,7 +171,8 @@ for current_fold in range(1, 11):
         conf = confusion_matrix(y_true=Y_unmatrixer(Y_test), y_pred=pred_Y,
                                 labels=range(1, c['num_of_classes']+1))
         ev_res.insert(0, epoch)
-        ev_res.insert(0, current_fold) 
+        ev_res.insert(0, current_fold)
+        ev_res[2] = sum(ev_res[2])/float(len(ev_res[2]))
         print(ev_res)
         total_eval_results.append(','.join([str(x) for x in ev_res]))
         total_eval_results.append(conf2str(conf))
