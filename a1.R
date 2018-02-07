@@ -5,17 +5,23 @@ args <- commandArgs(TRUE)
 
 infile <- args[1]
 # mode <- args[2]
-cutoff.1 <- as.integer(args[2])
+cutoff.1 <- as.integer(args[2]) 
 cutoff.2 <- as.integer(args[3])
-if (is.na(cutoff.1) || is.na(cutoff.2)){
-  stop('Missing cutoff argument(s)')
+if (is.na(cutoff.1)){
+  cutoff.1 <- 100
+  cat('defaulting to', cutoff.1, 'for cutoff.1 (min transations in category)\n')
+}
+
+if (is.na(cutoff.2)){
+  cutoff.2 <- 10
+  cat('defaulting to', cutoff.2, 'for cutoff.2 (min people in category)\n')
 }
 
 q <- read.csv(infile, as.is=T, na.string="NULL", header=T)
 q$operation_date_less_than_2016_01_01 <- NULL
-########### BE VERY CAREFUL HOW THIS ONE PLAYS OUT
+### SAFE???
 names(q)[grep('inout', names(q))] <- 'operationinout' 
-###########
+###
 
 others <- c(2000, 3000)
 
@@ -32,6 +38,9 @@ q$y[na.mask] <- q$y2[na.mask]
 # Remove NAs
 q <- q[!is.na(q$y),]
 q <- q[!is.na(q$operationdate),]
+q$payerbank[is.na(q$payerbank)] <- 9
+q$receiverbank[is.na(q$receiverbank)] <- 9
+
 # Remove old Y
 q$y1 <- NULL
 q$y2 <- NULL
@@ -75,6 +84,13 @@ for(category in cat.map$original){
 
 ### TIME 
 q$operationdate <- as.integer(as.Date(q$operationdate))
+###
+
+### Paste payerbank, receiverbank, operationinout
+q$paymentpurpose <- paste(as.character(q$operationinout), 
+                          as.character(q$payerbank), 
+                          as.character(q$receiverbank), 
+                          q$paymentpurpose, sep='') 
 ###
 
 all.ppl <- unique(q$StatementHolderId)
@@ -132,7 +148,7 @@ names(train.ppl) <- c("fold", "StatementHolderId")
 train <- merge(train, train.ppl, by="StatementHolderId", all.x=T)
 
 
-### Writeout respecting cutoff.3 date
+### Writeout NOT respecting cutoff.3 date
 
 train.out <- file.path(dirname(infile), paste('train', basename(infile), sep='.'))
 test.out <- file.path(dirname(infile), paste('test', basename(infile), sep='.'))

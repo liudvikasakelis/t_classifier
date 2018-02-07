@@ -63,8 +63,8 @@ default_cfg = {'alpha': 2e-3,
               'batch_size': 512,
               'num_of_classes': 112,
               'dropout_p': 0.5,
-              'train_cutoff': 16801,
-              'CV_cutoff': 16071
+              'train_cutoff': 17166,
+              'CV_cutoff': 16801
 }
 
 custom_cfg = json.loads(custom_cfg)
@@ -87,9 +87,6 @@ fdata = pd.read_csv(train_file, sep=',', quotechar='"',
                              'operationdate'])
 
 fdata = fdata[fdata.operationdate < c['train_cutoff']]
-
-fdata['paymentpurpose'] = (fdata['operationinout'].map(str)
-                                   + fdata['paymentpurpose'])
 
 fold_mask = fdata.fold.tolist()
 
