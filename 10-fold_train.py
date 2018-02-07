@@ -16,6 +16,7 @@ import numpy as np
 import pandas as pd
 import json
 
+#### Functions
 
 def matrixer(line):
     try:
@@ -40,6 +41,8 @@ def conf2str(conf):
     conf = conf.astype('str')
     return('\n'.join([','.join(i) for i in conf]) + '\n')
     
+####
+
 train_file = sys.argv[1]
 custom_cfg = sys.argv[2]
 
@@ -77,6 +80,10 @@ print('Custom config {}, results output to {}'.format(custom_cfg, results_file))
 c = {**default_cfg, **custom_cfg} 
 print(c)
 
+class_weights = dict()
+for i in range(1, c['num_of_classes']+1):
+    class_weights[i] = 1
+    
 print("Loading the data sets...")
 start_time = time.time()
 
@@ -146,7 +153,7 @@ for current_fold in range(1, 11):
     for epoch in range(1, c['epochs'] + 1):
         print('Manual epoch {}/{}'.format(epoch, c['epochs']))
         model.fit(X_train, Y_train, epochs=1, 
-                  batch_size=c['batch_size'])
+                  batch_size=c['batch_size'], class_weight=class_weights)
         ev_res = model.evaluate(X_test, Y_test, verbose=0)
         
         pred_Y = Y_unmatrixer(model.predict(X_test))
