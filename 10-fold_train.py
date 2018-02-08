@@ -122,8 +122,8 @@ for current_fold in range(1, 11):
     
     class_counter = Counter(Y_train)
     class_weights = [len(Y_train)/class_counter[x] 
-                     if class_counter[x] != 0 else 0 
-                     for x in range(1, c['num_of_classes']+1)]
+                       if class_counter[x] != 0 else 0 
+                       for x in range(1, c['num_of_classes']+1)]
 
     Y_train = Y_matrixer(Y_train)
     Y_test = Y_matrixer(Y_test)
@@ -164,7 +164,8 @@ for current_fold in range(1, 11):
     for epoch in range(1, c['epochs'] + 1):
         print('Manual epoch {}/{}'.format(epoch, c['epochs']))
         model.fit(X_train, Y_train, epochs=1, 
-                  batch_size=c['batch_size'])
+                  batch_size=c['batch_size'],
+                  class_weight=dict((i, a) for i,a in enumerate(class_weights)))
         ev_res = model.evaluate(X_test, Y_test, verbose=0)
         
         pred_Y = Y_unmatrixer(model.predict(X_test))
