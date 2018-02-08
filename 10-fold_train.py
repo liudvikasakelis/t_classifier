@@ -52,6 +52,10 @@ def Wget(fname):
 
 train_file = sys.argv[1]
 custom_cfg = sys.argv[2]
+if len(sys.argv) > 3:
+    with open(sys.argv[3], 'r') as f:
+        class_weights = [float(x) if x != '' else 1 
+                         for x in f.read().split('\n')]
 
 default_cfg = {'alpha': 2e-3,
               'decay': 0,
@@ -119,11 +123,11 @@ for current_fold in range(1, 11):
     Y_train = [Y[i] for i, value in enumerate(train_index) if value]
     X_test = [X[i] for i, value in enumerate(test_index) if value]
     Y_test = [Y[i] for i, value in enumerate(test_index) if value]
-    
-    class_counter = Counter(Y_train)
-    class_weights = [pow(len(Y_train)/class_counter[x], 0.5) 
-                     if class_counter[x] != 0 else 0 
-                     for x in range(1, c['num_of_classes']+1)]
+    if len(sys.argv) < 4:
+        class_counter = Counter(Y_train)
+        class_weights = [pow(len(Y_train)/class_counter[x], 0.5) 
+                        if class_counter[x] != 0 else 0 
+                        for x in range(1, c['num_of_classes']+1)]
 
     Y_train = Y_matrixer(Y_train)
     Y_test = Y_matrixer(Y_test)
