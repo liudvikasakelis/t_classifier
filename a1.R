@@ -3,6 +3,20 @@ args <- commandArgs(TRUE)
 
 ### USING category_mappings.txt FROM dirname() TO RE-MAP CATEGORIES
 
+calculate.weights <- function(vect){
+  tally <- table(vect)
+  weights <- c()
+  Length <- length(vect)
+  for(i in 1:112){
+    if( ! is.na(tally[as.character(i)])){
+      weights <- c(weights, Length/tally[as.character(i)])
+    }else{
+      weights <- c(weights, 1)
+    }
+  }
+  return(weights)
+}
+
 infile <- args[1]
 # mode <- args[2]
 cutoff.1 <- as.integer(args[2]) 
@@ -46,6 +60,21 @@ q$y1 <- NULL
 q$y2 <- NULL
 cat(nrow(q), 'rows\n')
 
+### MAPPING
+cat.map <- read.csv(paste(dirname(infile), 'category_mappings.txt', sep='/'),
+                    header=T, as.is=T)
+for(category in cat.map$original){
+  mapped.cat <- cat.map$mapped[cat.map$original==category]
+  q$y[q$y == category] <- mapped.cat
+}
+###
+
+weights <- calculate.weights(q$y)
+write.table(weights, file.path(dirname(infile), 'weights.txt'), 
+            row.names=F, col.names=F)
+
+test.out <- file.path(dirname(infile), paste('test', basename(infile), sep='.'))
+
 all.cats <- unique(q$y)
 all.cats <- all.cats[!is.na(all.cats)]
 cat(length(all.cats), 'categories\n')
@@ -72,15 +101,6 @@ cat("Few people categories (", length(ppl.cats), ")\n", ppl.cats, "\n")
 cat(sum(q$y %in% ppl.cats) , "few people transactions to be removed\n")
 q <- q[!(q$y %in% ppl.cats),]
 cat(nrow(q), "rows left\n")
-
-### MAPPING
-# cat.map <- read.csv(paste(dirname(infile), 'category_mappings.txt', sep='/'),
-#                     header=T, as.is=T)
-# for(category in cat.map$original){
-#   mapped.cat <- cat.map$mapped[cat.map$original==category]
-#   q$y[q$y == category] <- mapped.cat
-# }
-###
 
 ### TIME 
 q$operationdate <- as.integer(as.Date(q$operationdate))
