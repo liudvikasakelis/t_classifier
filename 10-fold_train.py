@@ -35,7 +35,7 @@ def Y_matrixer(Y):
     return(ret)
 
 def Y_unmatrixer(Y):
-    Y = [list(x).index(max(x)) for x in Y]
+    Y = [max(enumerate(x), key=(lambda x:x[1]))[0]  for x in Y]
     return(Y)
 
 def conf2str(conf):
