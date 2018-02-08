@@ -30,7 +30,7 @@ cat.accuracy <- function(mx){
 
 simpleparse <- function(lns){
   lns <- strsplit(lns, ',')
-  lns <- q[which(sapply(q, length)==4)]
+  lns <- lns[which(sapply(lns, length)==4)]
   nms <- lns[[1]]
   lns <- lns[grep('[0-9]', lns)]
   lns <- lapply(lns, as.numeric)
