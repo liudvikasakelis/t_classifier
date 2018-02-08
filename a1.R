@@ -74,12 +74,12 @@ q <- q[!(q$y %in% ppl.cats),]
 cat(nrow(q), "rows left\n")
 
 ### MAPPING
-cat.map <- read.csv(paste(dirname(infile), 'category_mappings.txt', sep='/'),
-                    header=T, as.is=T)
-for(category in cat.map$original){
-  mapped.cat <- cat.map$mapped[cat.map$original==category]
-  q$y[q$y == category] <- mapped.cat
-}
+# cat.map <- read.csv(paste(dirname(infile), 'category_mappings.txt', sep='/'),
+#                     header=T, as.is=T)
+# for(category in cat.map$original){
+#   mapped.cat <- cat.map$mapped[cat.map$original==category]
+#   q$y[q$y == category] <- mapped.cat
+# }
 ###
 
 ### TIME 
