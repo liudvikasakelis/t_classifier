@@ -1,14 +1,14 @@
+
+
 import sys
 import time
 
 global_start_time = time.asctime()
+
 from keras.models import Model, Sequential
 from keras.layers import Input, Dense, Flatten, Activation
-from keras.layers import Convolution1D
-from keras.layers import MaxPooling1D
-from keras.layers import Embedding
+from keras.layers import Convolution1D, MaxPooling1D, Embedding, Dropout
 from keras.layers import ThresholdedReLU
-from keras.layers import Dropout
 from keras.optimizers import Adam
 
 from collections import Counter
@@ -47,7 +47,12 @@ def Wget(fname):
         lines = f.read()
     weights = [int(x) for x in lines.split('\n') if x != '']
     return(weights)
-   
+
+def write_results(result):
+    with open(results_file, 'a') as f:
+        f.write(result)
+        f.write('\n')
+    
 ###
 
 train_file = sys.argv[1]
@@ -87,6 +92,7 @@ if (custom_cfg.keys() - default_cfg.keys()):
 
 results_file = 'results/' + str(int(time.time()/60)) + '.results.txt'
 print('Custom config {}, results output to {}'.format(custom_cfg, results_file))
+
 # Combine configurations preferring custom_cfg
 c = {**default_cfg, **custom_cfg} 
 print(c)
@@ -95,30 +101,29 @@ print("Loading the data sets...")
 start_time = time.time()
 
 fdata = pd.read_csv(train_file, sep=',', quotechar='"', 
-                    usecols=['fold', 'y', 'paymentpurpose', 'operationinout', 
-                             'operationdate'])
-
+                    usecols=['fold', 'y', 'paymentpurpose', 
+                             'operationinout', 'operationdate'])
 fdata = fdata[fdata.operationdate < c['train_cutoff']]
-
 fold_mask = fdata.fold.tolist()
-
 X = [matrixer(x) for x in fdata['paymentpurpose']]
 Y = fdata.y.tolist()
-
 for i in range(1, len(X)):
     if len(X[i]) > c['l0']:
         X[i] = X[i][:c['l0']]
 
 print("Loadded all data in {}".format(time.time() - start_time))
-print('lengths {} {} (for sanity)'.format(len(X), len(Y)))
+print('lengths {} {}'.format(len(X), len(Y)))
 
-total_eval_results = ['fold,epoch,categorical_crossentropy,categorical_accuracy']
+write_results('\n'.join([global_start_time, json.dumps(c)]))
+write_results('fold,epoch,categorical_crossentropy,categorical_accuracy')
 
 for current_fold in range(1, 11):
     print('\nDoing fold {}'.format(current_fold))
     start_time = time.time()
-    test_index = ((fdata.fold == current_fold) & (fdata.operationdate > c['CV_cutoff']))
-    train_index = ((fdata.fold != current_fold) & (fdata.operationdate < c['CV_cutoff']))
+    test_index = ((fdata.fold == current_fold) 
+                  & (fdata.operationdate > c['CV_cutoff']))
+    train_index = ((fdata.fold != current_fold) 
+                   & (fdata.operationdate < c['CV_cutoff']))
     X_train = [X[i] for i, value in enumerate(train_index) if value]
     Y_train = [Y[i] for i, value in enumerate(train_index) if value]
     X_test = [X[i] for i, value in enumerate(test_index) if value]
@@ -132,8 +137,6 @@ for current_fold in range(1, 11):
     Y_train = Y_matrixer(Y_train)
     Y_test = Y_matrixer(Y_test)
     
-    
-        
     
     print('Folding done in {} \n {} train entries\n {} test entries'.format(
            time.time() - start_time, len(X_train), len(X_test)))
@@ -179,18 +182,10 @@ for current_fold in range(1, 11):
         ev_res.insert(0, current_fold)
         ev_res[2] = sum(ev_res[2])
         print(ev_res)
-        total_eval_results.append(','.join([str(x) for x in ev_res]))
-        total_eval_results.append(conf2str(conf))
-        # print(conf2str(conf))
+        write_results(','.join([str(x) for x in ev_res]))
+        write_results(conf2str(conf))
     
     model.save('model{}.test'.format(current_fold))
     print("Done with fold {}!\n".format(current_fold))
 
-with open(results_file, mode='w') as f:
-    f.write(global_start_time)
-    f.write('\n')
-    f.write(time.asctime())
-    f.write('\n')
-    f.write(json.dumps(c))
-    f.write('\n')
-    f.write('\n'.join([str(a) for a in total_eval_results]))
+write_results(time.asctime())
