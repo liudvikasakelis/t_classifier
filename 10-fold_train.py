@@ -102,7 +102,7 @@ start_time = time.time()
 
 fdata = pd.read_csv(train_file, sep=',', quotechar='"', 
                     usecols=['fold', 'y', 'paymentpurpose', 
-                             'operationinout', 'operationdate'])
+                             'operationdate'])
 fdata = fdata[fdata.operationdate < c['train_cutoff']]
 fold_mask = fdata.fold.tolist()
 X = [matrixer(x) for x in fdata['paymentpurpose']]
