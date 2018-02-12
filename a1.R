@@ -3,6 +3,9 @@ args <- commandArgs(TRUE)
 
 ### USING category_mappings.txt FROM dirname() TO RE-MAP CATEGORIES
 
+
+### functions 
+
 calculate.weights <- function(vect){
   tally <- table(vect)
   weights <- c()
@@ -17,48 +20,65 @@ calculate.weights <- function(vect){
   return(weights)
 }
 
+### -----
+
+
 infile <- args[1]
-# mode <- args[2]
 cutoff.1 <- as.integer(args[2]) 
 cutoff.2 <- as.integer(args[3])
+
 if (is.na(cutoff.1)){
   cutoff.1 <- 100
   cat('defaulting to', cutoff.1, 'for cutoff.1 (min transations in category)\n')
 }
-
 if (is.na(cutoff.2)){
   cutoff.2 <- 10
   cat('defaulting to', cutoff.2, 'for cutoff.2 (min people in category)\n')
 }
 
 q <- read.csv(infile, as.is=T, na.string="NULL", header=T)
-q$operation_date_less_than_2016_01_01 <- NULL
 ### SAFE???
 names(q)[grep('inout', names(q))] <- 'operationinout' 
-###
 
 others <- c(2000, 3000)
-
 q$y1[q$y1 %in% others] <- NA
 q$y2[q$y2 %in% others] <- NA
 
 Encoding(q$paymentpurpose) <- "UTF-8" # IS NEEDED
+
+### Whitespace contraction
 q$paymentpurpose <- gsub('\\s+', ' ', q$paymentpurpose)
 
+### Use y1 if present, fill in the gaps with y2
 q$y <- q$y1
 na.mask <- is.na(q$y)
 q$y[na.mask] <- q$y2[na.mask]
 
-# Remove NAs
+### Remove unknown categories, also unknown dates 
 q <- q[!is.na(q$y),]
 q <- q[!is.na(q$operationdate),]
+### These NAs need specific values
 q$payerbank[is.na(q$payerbank)] <- 9
 q$receiverbank[is.na(q$receiverbank)] <- 9
 
-# Remove old Y
+### Paste payerbank, receiverbank, operationinout
+q$paymentpurpose <- paste(as.character(q$operationinout), 
+                          as.character(q$payerbank), 
+                          as.character(q$receiverbank), 
+                          q$paymentpurpose, sep='') 
+
+q$operationdate <- as.integer(as.Date(q$operationdate))
+
+### Delete columns 
+q$operationinout <- NULL
+q$payerbank <- NULL
+q$receiverbank <- NULL
+q$StatementDate <- NULL
+q$operation_date_less_than_2016_01_01 <- NULL
+q$receiverid <- NULL
+q$payerid <- NULL
 q$y1 <- NULL
 q$y2 <- NULL
-cat(nrow(q), 'rows\n')
 
 ### MAPPING
 cat.map <- read.csv(paste(dirname(infile), 'category_mappings.txt', sep='/'),
@@ -69,12 +89,18 @@ for(category in cat.map$original){
 }
 ###
 
+### Weights 
 weights <- calculate.weights(q$y)
 write.table(weights, file.path(dirname(infile), 'weights.txt'), 
             row.names=F, col.names=F)
 
-test.out <- file.path(dirname(infile), paste('test', basename(infile), sep='.'))
+### Remove duplicates?
+print(nrow(q))
+q <- q[sample(nrow(q)),]
+q <- q[!duplicated(q[c('paymentpurpose', 'StatementHolderId', 'y')]),]
+print(nrow(q))
 
+### Make a list of categories 
 all.cats <- unique(q$y)
 all.cats <- all.cats[!is.na(all.cats)]
 cat(length(all.cats), 'categories\n')
@@ -91,6 +117,9 @@ cat(sum(q$y %in% small.cats) , "small category transactions to be removed\n")
 q <- q[!(q$y %in% small.cats),]
 cat(nrow(q), "rows left\n")
 
+all.cats <- unique(q$y) # Remake category list 
+all.cats <- all.cats[!is.na(all.cats)]
+
 ppl.cats <- c() # categories with less people than cutoff.2
 for(category in all.cats){
   if(length(unique(q$StatementHolderId[q$y == category])) < cutoff.2){
@@ -101,17 +130,6 @@ cat("Few people categories (", length(ppl.cats), ")\n", ppl.cats, "\n")
 cat(sum(q$y %in% ppl.cats) , "few people transactions to be removed\n")
 q <- q[!(q$y %in% ppl.cats),]
 cat(nrow(q), "rows left\n")
-
-### TIME 
-q$operationdate <- as.integer(as.Date(q$operationdate))
-###
-
-### Paste payerbank, receiverbank, operationinout
-q$paymentpurpose <- paste(as.character(q$operationinout), 
-                          as.character(q$payerbank), 
-                          as.character(q$receiverbank), 
-                          q$paymentpurpose, sep='') 
-###
 
 all.ppl <- unique(q$StatementHolderId)
 all.cats <- unique(q$y)
@@ -168,10 +186,12 @@ names(train.ppl) <- c("fold", "StatementHolderId")
 train <- merge(train, train.ppl, by="StatementHolderId", all.x=T)
 
 
-### Writeout NOT respecting cutoff.3 date
+### Writeout 
 
-train.out <- file.path(dirname(infile), paste('train', basename(infile), sep='.'))
-test.out <- file.path(dirname(infile), paste('test', basename(infile), sep='.'))
+train.out <- file.path(dirname(infile), 
+                       paste('train', basename(infile), sep='.'))
+test.out <- file.path(dirname(infile), 
+                      paste('test', basename(infile), sep='.'))
 write.table(train, train.out, row.names=F, col.names=T, sep=",", 
             qmethod="double", fileEncoding="UTF-8")
 write.table(test, test.out, row.names=F, col.names=T, sep=",", 
