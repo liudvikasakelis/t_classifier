@@ -89,16 +89,16 @@ for(category in cat.map$original){
 }
 ###
 
-### Weights 
-weights <- calculate.weights(q$y)
-write.table(weights, file.path(dirname(infile), 'weights.txt'), 
-            row.names=F, col.names=F)
-
 ### Remove duplicates?
 print(nrow(q))
 q <- q[sample(nrow(q)),]
 q <- q[!duplicated(q[c('paymentpurpose', 'StatementHolderId', 'y')]),]
 print(nrow(q))
+
+### Weights 
+weights <- calculate.weights(q$y)
+write.table(weights, file.path(dirname(infile), 'weights.txt'), 
+            row.names=F, col.names=F)
 
 ### Make a list of categories 
 all.cats <- unique(q$y)
