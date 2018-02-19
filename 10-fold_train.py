@@ -20,10 +20,6 @@ import json
 ### Functions
 
 def matrixer(line):
-    try:
-        line = line.lower()
-    except AttributeError:
-        line = ''
     l = [ord(x) if ord(x) < c['alphabet_size'] else 20 for x in line]
     l = l + [0] * (c['l0'] - len(l))
     l = l[:c['l0']]
@@ -32,23 +28,17 @@ def matrixer(line):
 def Y_matrixer(Y):
     ret = np.zeros([len(Y), c['num_of_classes']])
     for ai, a in enumerate(Y):
-        ret[ai, a-1] = 1
+        ret[ai, a] = 1
     return(ret)
 
 def Y_unmatrixer(Y):
-    Y = [max(enumerate(x), key=(lambda x:x[1]))[0]  for x in Y]
+    Y = [max(enumerate(x), key=(lambda x:x[1]))[0] for x in Y]
     return(Y)
 
 def conf2str(conf):
     conf = conf.astype('str')
     return('\n'.join([','.join(i) for i in conf]) + '\n')
    
-def Wget(fname):
-    with open(fname, 'r') as f:
-        lines = f.read()
-    weights = [int(x) for x in lines.split('\n') if x != '']
-    return(weights)
-
 def write_results(result):
     with open(results_file, 'a') as f:
         f.write(result)
@@ -58,14 +48,18 @@ def create_map(y_values):
     y_map = dict((y, i+1) for i, y in enumerate(set(y_values)))
     return(y_map)
     
+def calculate_weights(y):
+    class_counter = collections.Counter(y)
+    tots = len(y)
+    class_weights = dict((x, pow(tots/class_counter[x], c['w_factor'])) 
+                         if class_counter[x] != 0 else (x, 1) 
+                         for x in range(1, c['num_of_classes']+1))
+    return(class_weights)
+
 ###
 
 train_file = sys.argv[1]
 custom_cfg = sys.argv[2]
-if len(sys.argv) > 3:
-    with open(sys.argv[3], 'r') as f:
-        class_weights = [float(x) if x != '' else 1 
-                         for x in f.read().split('\n')]
 
 default_cfg = {'alpha': 2e-3,
               'decay': 0,
@@ -88,7 +82,8 @@ default_cfg = {'alpha': 2e-3,
               'num_of_classes': 112,
               'dropout_p': 0.5,
               'train_cutoff': 17166,
-              'CV_cutoff': 16801
+              'CV_cutoff': 16801,
+              'w_factor': 0.5
 }
 
 custom_cfg = json.loads(custom_cfg)
@@ -108,13 +103,15 @@ start_time = time.time()
 fdata = pd.read_csv(train_file, sep=',', quotechar='"', 
                     usecols=['fold', 'y', 'paymentpurpose', 
                              'operationdate'])
+
+### Map categories to indices
 category_map = create_map(fdata.y)
-print(category_map)
 fdata.y = fdata.y.apply(lambda x: category_map[x])
-print(fdata.y[1:300])
+
 fdata = fdata[fdata.operationdate < c['train_cutoff']]
+
 fold_mask = fdata.fold.tolist()
-X = [matrixer(x) for x in fdata['paymentpurpose']]
+X = fdata.paymentpurpose.tolist()
 Y = fdata.y.tolist()
 
 print("Loadded all data in {}".format(time.time() - start_time))
@@ -126,27 +123,19 @@ write_results('fold,epoch,categorical_crossentropy,categorical_accuracy')
 for current_fold in range(1, 11):
     print('\nDoing fold {}'.format(current_fold))
     start_time = time.time()
-    test_index = ((fdata.fold == current_fold) 
-                  & (fdata.operationdate > c['CV_cutoff']))
-    train_index = ((fdata.fold != current_fold) 
-                   & (fdata.operationdate < c['CV_cutoff']))
-    X_train = [X[i] for i, value in enumerate(train_index) if value]
-    Y_train = [Y[i] for i, value in enumerate(train_index) if value]
-    X_test = [X[i] for i, value in enumerate(test_index) if value]
-    Y_test = [Y[i] for i, value in enumerate(test_index) if value]
-    combined_for_set = set(zip(X_train, Y_train))
-    X_train = [x[0] for x in combined_for_set]
-    Y_train = [x[1] for x in combined_for_set]    
     
-    if len(sys.argv) < 4:
-        class_counter = collections.Counter(Y_train)
-        class_weights = [pow(len(Y_train)/class_counter[x], 0.5) 
-                        if class_counter[x] != 0 else 0 
-                        for x in range(1, c['num_of_classes']+1)]
-
-    Y_train = Y_matrixer(Y_train)
-    Y_test = Y_matrixer(Y_test)
+    test = fdata[(fdata.fold == current_fold) &
+                 (fdata.operationdate > c['CV_cutoff'])]
+    train = fdata[(fdata.fold != current_fold) &
+                 (fdata.operationdate < c['CV_cutoff'])]
+    train = train.drop_duplicates(['paymentpurpose', 'y'])
     
+    X_train = [matrixer(x) for x in train.paymentpurpose]
+    X_test = [matrixer(x) for x in test.paymentpurpose]
+    Y_train = Y_matrixer(train.y)
+    Y_test = Y_matrixer(test.y)
+    
+    class_weights = calculate_weights(train.y)
     
     print('Folding done in {} \n {} train entries\n {} test entries'.format(
            time.time() - start_time, len(X_train), len(X_test)))
@@ -174,15 +163,14 @@ for current_fold in range(1, 11):
     optimizer = Adam(lr=c['alpha'], beta_1=c['beta1'], beta_2=c['beta2'], 
                      epsilon=c['epsilon'], decay=c['decay'])
     model.compile(optimizer=optimizer, loss='categorical_crossentropy',
-                  metrics=['categorical_accuracy'], 
-                  loss_weights=[class_weights])
+                  metrics=['categorical_accuracy'])
     print("New model built")
 
     for epoch in range(1, c['epochs'] + 1):
         print('Manual epoch {}/{}'.format(epoch, c['epochs']))
         model.fit(X_train, Y_train, epochs=1, 
                   batch_size=c['batch_size'],
-                  class_weight=dict((i, a) for i,a in enumerate(class_weights)))
+                  class_weight=class_weights)
         ev_res = model.evaluate(X_test, Y_test, verbose=0)
         
         pred_Y = Y_unmatrixer(model.predict(X_test))
@@ -190,7 +178,6 @@ for current_fold in range(1, 11):
                                 labels=range(1, c['num_of_classes']+1))
         ev_res.insert(0, epoch)
         ev_res.insert(0, current_fold)
-        ev_res[2] = sum(ev_res[2])
         print(ev_res)
         write_results(','.join([str(x) for x in ev_res]))
         write_results(conf2str(conf))

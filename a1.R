@@ -20,6 +20,7 @@ calculate.weights <- function(vect){
   return(weights)
 }
 
+
 ### -----
 
 
@@ -42,7 +43,8 @@ names(q)[grep('inout', names(q))] <- 'operationinout'
 
 others <- c(2000, 3000)
 q$y1[q$y1 %in% others] <- NA
-q$y2[q$y2 %in% others] <- NA
+### Manual assignment of 'other' should be respected 
+# q$y2[q$y2 %in% others] <- NA
 
 Encoding(q$paymentpurpose) <- "UTF-8" # IS NEEDED
 
@@ -80,14 +82,14 @@ q$payerid <- NULL
 q$y1 <- NULL
 q$y2 <- NULL
 
-### MAPPING
-cat.map <- read.csv(paste(dirname(infile), 'category_mappings.txt', sep='/'),
-                    header=T, as.is=T)
-for(category in cat.map$original){
-  mapped.cat <- cat.map$mapped[cat.map$original==category]
-  q$y[q$y == category] <- mapped.cat
-}
-###
+# ### MAPPING
+# cat.map <- read.csv(paste(dirname(infile), 'category_mappings.txt', sep='/'),
+#                     header=T, as.is=T)
+# for(category in cat.map$original){
+#   mapped.cat <- cat.map$mapped[cat.map$original==category]
+#   q$y[q$y == category] <- mapped.cat
+# }
+# ###
 
 ### Remove duplicates?
 print(nrow(q))
