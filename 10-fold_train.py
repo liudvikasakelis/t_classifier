@@ -11,7 +11,7 @@ from keras.layers import Convolution1D, MaxPooling1D, Embedding, Dropout
 from keras.layers import ThresholdedReLU
 from keras.optimizers import Adam
 
-from collections import Counter
+import collections
 from sklearn.metrics import confusion_matrix
 import numpy as np
 import pandas as pd
@@ -26,6 +26,7 @@ def matrixer(line):
         line = ''
     l = [ord(x) if ord(x) < c['alphabet_size'] else 20 for x in line]
     l = l + [0] * (c['l0'] - len(l))
+    l = l[:c['l0']]
     return(l)
 
 def Y_matrixer(Y):
@@ -52,6 +53,10 @@ def write_results(result):
     with open(results_file, 'a') as f:
         f.write(result)
         f.write('\n')
+   
+def create_map(y_values):
+    y_map = dict((y, i+1) for i, y in enumerate(set(y_values)))
+    return(y_map)
     
 ###
 
@@ -103,13 +108,14 @@ start_time = time.time()
 fdata = pd.read_csv(train_file, sep=',', quotechar='"', 
                     usecols=['fold', 'y', 'paymentpurpose', 
                              'operationdate'])
+category_map = create_map(fdata.y)
+print(category_map)
+fdata.y = fdata.y.apply(lambda x: category_map[x])
+print(fdata.y[1:300])
 fdata = fdata[fdata.operationdate < c['train_cutoff']]
 fold_mask = fdata.fold.tolist()
 X = [matrixer(x) for x in fdata['paymentpurpose']]
 Y = fdata.y.tolist()
-for i in range(1, len(X)):
-    if len(X[i]) > c['l0']:
-        X[i] = X[i][:c['l0']]
 
 print("Loadded all data in {}".format(time.time() - start_time))
 print('lengths {} {}'.format(len(X), len(Y)))
@@ -128,8 +134,12 @@ for current_fold in range(1, 11):
     Y_train = [Y[i] for i, value in enumerate(train_index) if value]
     X_test = [X[i] for i, value in enumerate(test_index) if value]
     Y_test = [Y[i] for i, value in enumerate(test_index) if value]
+    combined_for_set = set(zip(X_train, Y_train))
+    X_train = [x[0] for x in combined_for_set]
+    Y_train = [x[1] for x in combined_for_set]    
+    
     if len(sys.argv) < 4:
-        class_counter = Counter(Y_train)
+        class_counter = collections.Counter(Y_train)
         class_weights = [pow(len(Y_train)/class_counter[x], 0.5) 
                         if class_counter[x] != 0 else 0 
                         for x in range(1, c['num_of_classes']+1)]
