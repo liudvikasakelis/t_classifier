@@ -170,7 +170,8 @@ for current_fold in range(1, 11):
         print('Manual epoch {}/{}'.format(epoch, c['epochs']))
         model.fit(X_train, Y_train, epochs=1, 
                   batch_size=c['batch_size'],
-                  class_weight=class_weights)
+                  class_weight=class_weights,
+                  shuffle=True)
         ev_res = model.evaluate(X_test, Y_test, verbose=0)
         
         pred_Y = Y_unmatrixer(model.predict(X_test))
