@@ -10,6 +10,7 @@ from keras.layers import Input, Dense, Flatten, Activation
 from keras.layers import Convolution1D, MaxPooling1D, Embedding, Dropout
 from keras.layers import ThresholdedReLU
 from keras.optimizers import Adam
+import keras.backend as K
 
 import collections
 from sklearn.metrics import confusion_matrix
@@ -120,6 +121,7 @@ print('lengths {} {}'.format(len(X), len(Y)))
 write_results('\n'.join([global_start_time, json.dumps(c)]))
 write_results('fold,epoch,categorical_crossentropy,categorical_accuracy')
 
+
 for current_fold in range(1, 11):
     print('\nDoing fold {}'.format(current_fold))
     start_time = time.time()
@@ -167,6 +169,8 @@ for current_fold in range(1, 11):
     print("New model built")
 
     for epoch in range(1, c['epochs'] + 1):
+        K.set_value(model.optimizer.lr, c['alpha'] / pow(epoch, 0.5))
+        print(K.eval(model.optimizer.lr))
         print('Manual epoch {}/{}'.format(epoch, c['epochs']))
         model.fit(X_train, Y_train, epochs=1, 
                   batch_size=c['batch_size'],
@@ -183,7 +187,7 @@ for current_fold in range(1, 11):
         write_results(','.join([str(x) for x in ev_res]))
         write_results(conf2str(conf))
     
-    model.save('model{}.test'.format(current_fold))
+    # model.save('model{}.test'.format(current_fold))
     print("Done with fold {}!\n".format(current_fold))
 
 write_results(time.asctime())
