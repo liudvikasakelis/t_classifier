@@ -57,6 +57,9 @@ def calculate_weights(y):
                          for x in range(1, c['num_of_classes']+1))
     return(class_weights)
 
+def lr_scaler(x):
+    return(pow(x, 0.8))
+
 ###
 
 train_file = sys.argv[1]
@@ -173,13 +176,13 @@ for current_fold in range(1, 11):
                   batch_size=c['batch_size'],
                   class_weight=class_weights,
                   shuffle=True)
-    alpha_ratio = c['alpha'] / h.history['loss'][-1]
+    alpha_ratio = c['alpha'] / lr_scaler(h.history['loss'][-1])
     h = None
     
     for epoch in range(1, c['epochs'] + 1):
         if h:
             K.set_value(model.optimizer.lr, 
-                        alpha_ratio * h.history['loss'][-1])
+                        alpha_ratio * lr_scaler(h.history['loss'][-1]))
         print('Manual epoch {}/{}, learning rate {}'.format(
             epoch, c['epochs'], K.eval(model.optimizer.lr)))
         h = model.fit(X_train, Y_train, epochs=1, 
