@@ -168,16 +168,20 @@ for current_fold in range(1, 11):
                   metrics=['categorical_accuracy'])
     print("New model built")
     
-    h = model.train_on_batch(X_train[:3000], Y_train[:3000],
-                             class_weight=class_weights)
-    alpha_ratio = c['alpha'] / pow(h[0], 0.5)
+    get_a_taste = int(pow(len(X_train), 0.5) * 10)
+    h = model.fit(X_train[:get_a_taste], Y_train[:get_a_taste],
+                  batch_size=c['batch_size'],
+                  class_weight=class_weights,
+                  shuffle=True)
+    alpha_ratio = c['alpha'] / pow(h.history['loss'][-1], 0.5)
     h = None
+    
     for epoch in range(1, c['epochs'] + 1):
         if h:
             K.set_value(model.optimizer.lr, 
                         alpha_ratio * pow(h.history['loss'][-1], 0.5))
-        print('Current learning rate (alpha)', K.eval(model.optimizer.lr))
-        print('Manual epoch {}/{}'.format(epoch, c['epochs']))
+        print('Manual epoch {}/{}, learning rate {}'.format(
+            epoch, c['epochs'], K.eval(model.optimizer.lr)))
         h = model.fit(X_train, Y_train, epochs=1, 
                   batch_size=c['batch_size'],
                   class_weight=class_weights,
