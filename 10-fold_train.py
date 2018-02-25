@@ -173,13 +173,13 @@ for current_fold in range(1, 11):
                   batch_size=c['batch_size'],
                   class_weight=class_weights,
                   shuffle=True)
-    alpha_ratio = c['alpha'] / pow(h.history['loss'][-1], 0.5)
+    alpha_ratio = c['alpha'] / h.history['loss'][-1]
     h = None
     
     for epoch in range(1, c['epochs'] + 1):
         if h:
             K.set_value(model.optimizer.lr, 
-                        alpha_ratio * pow(h.history['loss'][-1], 0.5))
+                        alpha_ratio * h.history['loss'][-1])
         print('Manual epoch {}/{}, learning rate {}'.format(
             epoch, c['epochs'], K.eval(model.optimizer.lr)))
         h = model.fit(X_train, Y_train, epochs=1, 
