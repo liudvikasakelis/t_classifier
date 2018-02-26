@@ -58,7 +58,7 @@ def calculate_weights(y):
     return(class_weights)
 
 def lr_scaler(x):
-    return(pow(x, 0.8))
+    return(pow(x, c['decay_factor']))
 
 ###
 
@@ -87,7 +87,9 @@ default_cfg = {'alpha': 2e-3,
               'dropout_p': 0.5,
               'train_cutoff': 17166,
               'CV_cutoff': 16801,
-              'w_factor': 0.5
+              'w_factor': 0.5, # weight = fair_ratio ^ w_factor
+              'decay_factor': 0.5 # linearity of LR (alpha) decay
+
 }
 
 custom_cfg = json.loads(custom_cfg)
@@ -171,7 +173,7 @@ for current_fold in range(1, 11):
                   metrics=['categorical_accuracy'])
     print("New model built")
     
-    get_a_taste = int(pow(len(X_train), 0.5) * 10)
+    get_a_taste = int(pow(len(X_train), 0.6) * 10)
     h = model.fit(X_train[:get_a_taste], Y_train[:get_a_taste],
                   batch_size=c['batch_size'],
                   class_weight=class_weights,
